@@ -1,0 +1,32 @@
+#!/bin/bash
+
+if [ "${DIB_DEBUG_TRACE:-0}" -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+DIB_IPA_ENABLE_RESCUE=${DIB_IPA_ENABLE_RESCUE:-true}
+
+if $DIB_IPA_ENABLE_RESCUE; then
+    # Make sure rescue works
+    mkdir -p /etc/ipa-rescue-config
+fi
+
+case "$DIB_INIT_SYSTEM" in
+    systemd)
+        if [[ $(systemctl --no-pager list-unit-files iptables) =~ 'enabled' ]]; then
+            systemctl disable iptables.service
+        fi
+        systemctl enable "ironic-python-agent.service"
+        if $DIB_IPA_ENABLE_RESCUE; then
+            systemctl enable ironic-agent-create-rescue-user.path
+        fi
+        ;;
+    *)
+        echo "Unsupported init system"
+        exit 1
+        ;;
+esac
+
+

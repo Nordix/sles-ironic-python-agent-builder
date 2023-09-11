@@ -1,0 +1,35 @@
+#!/bin/bash
+
+if [ ${DIB_DEBUG_TRACE:-0} -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+# Enable caching packages for all repositories
+zypper modifyrepo --all --keep-packages
+zypper addrepo "dir:/mnt/repos/Module-Basesystem" "dvdBase"
+zypper addrepo "dir:/mnt/repos/Module-Containers" "dvdContainers"
+zypper addrepo "dir:/mnt/repos/Module-Desktop-Applications" "dvdDesktop"
+zypper addrepo "dir:/mnt/repos/Module-Development-Tools" "dvdDev"
+zypper addrepo "dir:/mnt/repos/Module-HPC" "dvdHPC"
+zypper addrepo "dir:/mnt/repos/Module-Legacy" "dvdLegacy"
+zypper addrepo "dir:/mnt/repos/Module-Live-Patching" "dvdPatching"
+zypper addrepo "dir:/mnt/repos/Module-Public-Cloud" "dvdPubCloud"
+zypper addrepo "dir:/mnt/repos/Module-Python3" "dvdPython3"
+zypper addrepo "dir:/mnt/repos/Module-Server-Applications" "dvdServer"
+zypper addrepo "dir:/mnt/repos/Module-Transactional-Server" "dvdTransServer"
+zypper addrepo "dir:/mnt/repos/Module-Web-Scripting" "dvdWebScript"
+zypper addrepo "dir:/mnt/repos/Product-HA" "dvdHA"
+zypper addrepo "dir:/mnt/repos/Product-HPC" "dvdPHPC"
+zypper addrepo "dir:/mnt/repos/Product-SLED" "dvdSLED"
+zypper addrepo "dir:/mnt/repos/Product-SLES" "dvdSLES"
+zypper addrepo "dir:/mnt/repos/Product-SLES_SAP" "dvdSLES_SAP"
+zypper addrepo "dir:/mnt/repos/Product-WE" "dvdWE"
+zypper remove -y --force-resolution  "python3*" || true
+zypper install -y "python3.10"
+zypper install -y "python3.10-devel"
+ln -s "/usr/bin/python3.10" "/usr/bin/python3"
+ln -s "/usr/bin/python3.10" "/usr/bin/python"
+
+python3 --version

@@ -1,0 +1,13 @@
+#!/bin/bash
+
+# dib-lint: disable=safe_sudo
+
+if [ "${DIB_DEBUG_TRACE:-0}" -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+#sudo umount "$TARGET_ROOT/mnt/repos"
+#sudo umount "$TARGET_ROOT/repos/"
+

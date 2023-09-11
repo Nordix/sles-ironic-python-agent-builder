@@ -1,0 +1,92 @@
+#!/bin/bash
+
+if [ "${DIB_DEBUG_TRACE:-0}" -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+# Install IPA distro package requirements
+
+zypper install -y \
+curl \
+dmidecode \
+iptables \
+lshw \
+ipmitool \
+qemu-tools \
+gcc \
+parted \
+hdparm \
+util-linux \
+mkisofs \
+gptfdisk \
+kmod \
+psmisc \
+dosfstools \
+mdadm \
+efibootmgr \
+efivar \
+chrony \
+e2fsprogs \
+nvme-cli \
+open-iscsi \
+libffi-devel \
+libopenssl-devel
+
+zypper install -y \
+git \
+man-pages
+
+#cloud-init \
+export LC_ALL=C.UTF-8
+
+SCRIPTDIR=$(dirname $0)
+IPADIR=/tmp/ironic-python-agent
+IRLIBDIR=/tmp/ironic-lib
+UPPER_CONSTRAINTS=/tmp/requirements/upper-constraints.txt
+VENVDIR=/opt/ironic-python-agent
+
+"python3.10" --version
+"python3.10" -m venv $VENVDIR
+REQUIRED_PIP_STR="21.3.1"
+REQUIRED_PIP_TUPLE="(21, 3, 1)"
+HAS_PIP=$($VENVDIR/bin/python3 -c \
+    "import pip; print(tuple(map(int, pip.__version__.split('.'))) >= $REQUIRED_PIP_TUPLE)")
+if [ $HAS_PIP == "False" ]; then
+    # NOTE(dtantsur): use a fixed version to avoid breakages
+    $VENVDIR/bin/pip install "pip==$REQUIRED_PIP_STR"
+fi
+
+# For aarch64 platform, it seems it always tries to build wheels first for
+# python packages which have no wheels in PyPi. Although it will install the
+# source packages successfully at last.
+if [[ "$ARCH" =~ (arm64|aarch64) ]]; then
+    $VENVDIR/bin/pip install wheel
+fi
+
+# install IPA inside the virtual environment
+$VENVDIR/bin/pip install -c $UPPER_CONSTRAINTS $IPADIR
+ln -s $VENVDIR/bin/ironic-python-agent /usr/local/bin/
+ln -s $VENVDIR/bin/ironic-collect-introspection-data /usr/local/bin/
+
+# install ironic-lib from source if requested
+if [ ${IRONIC_LIB_FROM_SOURCE:-false} == "true" ]; then
+    $VENVDIR/bin/pip install -c $UPPER_CONSTRAINTS -r $IRLIBDIR/requirements.txt
+    $VENVDIR/bin/pip install $IRLIBDIR
+fi
+
+case "$DIB_INIT_SYSTEM" in
+    systemd)
+        install -D -g root -o root -m 0644 ${SCRIPTDIR}/ironic-python-agent.service /usr/lib/systemd/system/ironic-python-agent.service
+        ;;
+    *)
+        echo "Unsupported init system"
+        exit 1
+        ;;
+esac
+
+# Copying the self signed certificate for request library
+if [ -f /tmp/in_target.d/ipa-trusted-cert.pem ]; then
+    cat /tmp/in_target.d/ipa-trusted-cert.pem >> $($VENVDIR/bin/python -c "import requests; print(requests.certs.where())")
+fi
+

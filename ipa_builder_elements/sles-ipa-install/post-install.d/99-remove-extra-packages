@@ -1,0 +1,21 @@
+#!/bin/bash
+
+if [ "${DIB_DEBUG_TRACE:-0}" -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+rm -rf /tmp/ironic-python-agent
+# Clean both /lib and /lib/firmware, the first
+# loop will likely go ahead and remove everything, the || true
+# below will keep it from erroring.
+KNOWN_FIRMWARE_PATH="/lib/firmware/ /usr/lib/firmware/"
+for folder in $KNOWN_FIRMWARE_PATH; do
+    for item in ${IPA_REMOVE_FIRMWARE//,/ }; do
+        # Attempt removal of item, but don't error
+        # if it is not present already.
+        rm -rf $folder$item || true
+    done
+done
+
