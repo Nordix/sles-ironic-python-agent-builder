@@ -1,0 +1,55 @@
+#!/bin/bash
+
+if [ "${DIB_DEBUG_TRACE:-0}" -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+VENVDIR=/opt/ironic-python-agent
+
+zypper install -y \
+"ethtool" \
+"fio" \
+"infiniband-diags" \
+"pciutils" \
+"smartmontools" \
+
+zypper install -y make automake libtool pkgconfig libaio-devel
+
+zypper install -y libconfig-devel libnl-devel readline-devel flex
+
+# lldpd
+LLDPAD_VER="v1.1"
+
+curl -O "https://codeload.github.com/openSUSE/lldpad/tar.gz/refs/tags/$LLDPAD_VER"
+tar -xf "$LLDPAD_VER"
+
+pushd "lldpad-${LLDPAD_VER#*v}"
+./bootstrap.sh
+./configure --prefix=/usr
+make
+make install
+popd
+rm -rf "$LLDPAD_VER"
+rm -rf "lldpad-$LLDPAD_VER"
+
+#sysbench
+SYSBENCH_VER="1.0.20"
+
+curl -O "https://codeload.github.com/akopytov/sysbench/tar.gz/refs/tags/$SYSBENCH_VER"
+tar -xf "$SYSBENCH_VER"
+
+pushd "sysbench-$SYSBENCH_VER"
+./autogen.sh
+./configure --without-mysql
+make -j
+make install
+popd
+# clean up the source
+rm -rf "$SYSBENCH_VER"
+rm -rf "sysbench-$SYSBENCH_VER"
+
+# python-hardware
+zypper install -y "python310-pip"
+"pip3.10" install "hardware"

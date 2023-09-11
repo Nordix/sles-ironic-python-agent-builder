@@ -1,0 +1,241 @@
+#!/bin/bash
+
+if [ ${DIB_DEBUG_TRACE:-0} -gt 0 ]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+[ -n "$ARCH" ]
+[ -n "$TARGET_ROOT" ]
+
+if [ 'amd64' = "$ARCH" ] ; then
+    ARCH="x86_64"
+fi
+
+if ! [ 'x86_64' = "$ARCH" ] ; then
+    echo "Only x86_64 images are currently available but ARCH is set to $ARCH."
+    exit 1
+fi
+
+GUID_EFI="c12a7328-f81f-11d2-ba4b-00a0c93ec93b"
+GUID_LINUX_BOOT="bc13c2ff-59e6-4262-a352-b275fd6f7172"
+
+# Set some image defaults
+IMAGE_RELEASE="${DIB_SLES_RELEASE}-${DIB_SLES_SERVICE_PACK}-${DIB_SLES_INSTALL_TYPE}"
+#IMAGE_TYPE="${ARCH}-${DIB_SLES_IMAGE_TARGET_PLATFORM}-${DIB_SLES_BUILD_NUM}"
+IMAGE_TYPE="${ARCH}-${DIB_SLES_IMAGE_TARGET_PLATFORM}"
+IMAGE_RELEASE="${DIB_SLES_RELEASE}-${DIB_SLES_SERVICE_PACK}-${DIB_SLES_INSTALL_TYPE}"
+IMAGE_EXT="qcow2"
+BASE_IMAGE_FILE="${BASE_IMAGE_FILE:-${IMAGE_RELEASE}.${IMAGE_TYPE}.${IMAGE_EXT}}"
+BASE_IMAGE_TAR="${BASE_IMAGE_TAR:-${IMAGE_RELEASE}.${IMAGE_TYPE}.tar}"
+
+CACHED_IMAGE=$DIB_IMAGE_CACHE/$BASE_IMAGE_FILE
+CACHED_TAR=$DIB_IMAGE_CACHE/$BASE_IMAGE_TAR
+CACHED_SHA256SUMS_FILE=$DIB_IMAGE_CACHE/SHA256SUMS.$BASE_IMAGE_FILE
+
+
+
+
+
+if [ -n "$DIB_OFFLINE" ] ; then
+echo "Moving locally stored image to dib cache."
+
+cp "$DIB_SLES_OFFLINE_TARGET_DIR/$BASE_IMAGE_FILE" "$DIB_IMAGE_CACHE/$BASE_IMAGE_FILE"
+
+echo "Repacking base image as tarball."
+
+WORKING=$(mktemp --tmpdir=${TMP_DIR:-/tmp} -d)
+EACTION="rm -r $WORKING"
+trap "$EACTION" EXIT
+echo "Working in $WORKING"
+
+RAW_FILE=$(mktemp --tmpdir=$WORKING XXXXXX.raw)
+
+if [ "${CACHED_IMAGE: -3}" == ".xz" ] ; then
+    QCOW2_FILE=$(mktemp --tmpdir=$WORKING XXXXXX.qcow2)
+    # This leaves the old image in place so cache-url wont get it again
+    unxz --stdout $CACHED_IMAGE > $QCOW2_FILE
+    CACHED_IMAGE=$QCOW2_FILE
+fi
+
+qemu-img convert -f qcow2 -O raw $CACHED_IMAGE $RAW_FILE
+
+# kpartx fails if no /dev/loop* exists, "losetup -f" prints first unused
+# loop device and creates it if it doesn't exist
+LOOPDEV_BASE=$(basename $(sudo losetup -f))
+
+# add partition mappings
+sudo kpartx -av $RAW_FILE
+
+# If running inside Docker, make our nodes manually, because udev will not be working.
+if [ -f /.dockerenv ]; then
+    sudo dmsetup --noudevsync mknodes
+fi
+if ! timeout 5 sh -c "while ! ls /dev/mapper/${LOOPDEV_BASE}p* ; do sleep 1; done"; then
+    echo "Error: Could not find any ${LOOPDEV_BASE} devices"
+    exit 1
+fi
+
+EACTION="sudo kpartx -d $RAW_FILE ; $EACTION"
+trap "$EACTION" EXIT
+
+ROOT_LOOPDEV=""
+BOOT_LOOPDEV=""
+EFI_LOOPDEV=""
+
+LOOPDEVS=$(ls /dev/mapper/${LOOPDEV_BASE}p* | sort -r)
+LOOPDEV_COUNT=$(echo $LOOPDEVS | wc -w)
+if [ $LOOPDEV_COUNT == "1" ]; then
+    # if there is one partition device, assume it is the root device
+    ROOT_LOOPDEV=${LOOPDEVS}
+    LOOPDEVS=""
+fi
+
+for LOOPDEV in ${LOOPDEVS}; do
+    fstype=$(lsblk --all --nodeps --noheadings --output FSTYPE $LOOPDEV)
+    label=$(lsblk --all --nodeps --noheadings --output LABEL $LOOPDEV)
+    part_type=$(lsblk --all --nodeps --noheadings --output PARTTYPE $LOOPDEV)
+
+    if [ -z "${fstype}" ]; then
+        # Ignore block device with no filesystem type
+        continue
+    fi
+
+    # look for EFI partition to mount at /boot/efi either by GUID or
+    # label convention
+    if [ -z "$EFI_LOOPDEV" ]; then
+        if [[ ${part_type} == ${GUID_EFI} ]]; then
+            EFI_LOOPDEV=$LOOPDEV
+            continue
+        fi
+    fi
+
+    # look for EFI partition to mount at /boot/efi either by GUID or
+    # label convention.
+    if [ -z "$BOOT_LOOPDEV" ]; then
+        if [[ ${part_type} == ${GUID_LINUX_BOOT} || ${label} == "boot" ]]; then
+            BOOT_LOOPDEV=$LOOPDEV
+            continue
+        fi
+    fi
+
+    if [ -z "$ROOT_LOOPDEV" ]; then
+        ROOT_LOOPDEV=$LOOPDEV
+        continue
+    fi
+done
+
+mkdir $WORKING/mnt
+ROOT_FSTYPE=$(sudo blkid -o value -s TYPE $ROOT_LOOPDEV)
+if [ "xfs" = "$ROOT_FSTYPE" ]; then
+    # mount xfs with nouuid, just in case that uuid is already mounted
+    # use ro to avoid/workaround xfs uuid issues on older
+    # kernels with newer rhel images which seem to set
+    # flags to generate unique uuid's:
+    #  xfs superblock has incompatible features (0x4)
+    # we don't need to worry about this, we just want the data
+    MOUNTOPTS="-o nouuid,ro"
+elif [ "btrfs" = "$ROOT_FSTYPE" ]; then
+    # Fedora has a btrfs filesystem with a subvolume called root.
+    # For now assume there will be a 'root' subvolume, but in the
+    # future the subvolume layout may need to be discovered for different
+    # images
+    MOUNTOPTS="-o subvol=root"
+else
+    MOUNTOPTS=""
+fi
+
+sudo mount $MOUNTOPTS $ROOT_LOOPDEV $WORKING/mnt
+EACTION="sudo umount -f $WORKING/mnt ; $EACTION"
+trap "$EACTION" EXIT
+
+if [ ! -z "$BOOT_LOOPDEV" ]; then
+    # mount to /boot
+    BOOT_FSTYPE=$(sudo blkid -o value -s TYPE $ROOT_LOOPDEV)
+    if [ "xfs" = "$BOOT_FSTYPE" ]; then
+        BOOT_MOUNTOPTS="-o nouuid,ro"
+        # Similar to root filesystem, if the boot filesystem
+        # is XFS and the base OS is the same as the image being
+        # rebuilt, we need to pass "nouuid" to bypass UUID safety
+        # checks and successfully mounts so we can extract the
+        # contents.
+    else
+        BOOT_MOUNTOPTS=""
+    fi
+    sudo mount $BOOT_MOUNTOPTS $BOOT_LOOPDEV $WORKING/mnt/boot
+    EACTION="sudo umount -f $BOOT_LOOPDEV ; $EACTION"
+    trap "$EACTION" EXIT
+fi
+if [ ! -z "$EFI_LOOPDEV" ]; then
+    # mount to /boot/efi
+    sudo mount $EFI_LOOPDEV $WORKING/mnt/boot/efi
+    EACTION="sudo umount -f $EFI_LOOPDEV ; $EACTION"
+    trap "$EACTION" EXIT
+fi
+
+# find out if chroot tar has full xattr support
+if [ 0 == `sudo chroot $WORKING/mnt bin/tar --help | grep -c xattrs-exclude` ]; then
+    TAROPTS="--no-xattrs"
+else
+    TAROPTS="--xattrs --xattrs-include=* --xattrs-exclude=security.selinux"
+fi
+# Chroot in so that we get the correct uid/gid
+sudo chroot $WORKING/mnt bin/tar $TAROPTS -cz . > $WORKING/tmp.tar
+mv $WORKING/tmp.tar $CACHED_TAR
+
+# Extract the base image (use --numeric-owner to avoid UID/GID mismatch between
+# image tarball and host OS e.g. when building Fedora image on an openSUSE host)
+# Include all xattrs except selinux because the selinux ones cause issues in our
+# chroot environment, and we restore all of those at the end of the build anyway.
+echo "Extracting base root image from $CACHED_TAR"
+echo "Base FS parent dir is: $TARGET_ROOT"
+sudo tar -C $TARGET_ROOT --numeric-owner --xattrs --xattrs-include='*' --xattrs-exclude='security.selinux' -xzf $CACHED_TAR
+
+
+echo "SUCESS CREATING BASE FS"
+
+
+
+
+
+
+
+
+
+   # $TMP_HOOKS_PATH/bin/cache-url $DIB_CLOUD_IMAGES/$SHA256SUMS_FILE $CACHED_SHA256SUMS_FILE
+else
+    echo "ERROR: Image donwloading is not implemented for SLES at the moment."
+    echo "DIB will exit with error code 1"
+    exit 1
+   # echo "Fetching Base Image"
+   # $TMP_HOOKS_PATH/bin/cache-url $DIB_CLOUD_IMAGES/$SHA256SUMS_FILE $CACHED_SHA256SUMS_FILE
+   # $TMP_HOOKS_PATH/bin/extract-image $BASE_IMAGE_FILE $BASE_IMAGE_FILE.tgz $DIB_CLOUD_IMAGES/$BASE_IMAGE_FILE $CACHED_FILE
+   # pushd $DIB_IMAGE_CACHE
+    # Calculate sha256sum of downloaded image and check against content from sha256 file
+   # SHA256SUM=$(sha256sum ${BASE_IMAGE_FILE} | cut -d " " -f1)
+   # grep -q $SHA256SUM SHA256SUMS.$BASE_IMAGE_FILE
+   # popd
+fi
+
+
+# Attaching ISO package repository to root file system
+REPO_IMAGE_RELEASE="${DIB_SLES_RELEASE}-${DIB_SLES_SERVICE_PACK}-FULL"
+REPO_IMAGE_TYPE="${ARCH}-GM-Media-1"
+REPO_IMAGE_EXT="iso"
+REPO_BASE_IMAGE_FILE="${REPO_BASE_IMAGE_FILE:-${REPO_IMAGE_RELEASE}.${REPO_IMAGE_TYPE}.${REPO_IMAGE_EXT}}"
+DIB_SLES_ISO_REPO="${DIB_SLES_ISO_REPO:-/tmp/${REPO_BASE_IMAGE_FILE}}"
+
+sudo mkdir -p "$TARGET_ROOT/repos"
+sudo mkdir -p "$TARGET_ROOT/mnt/repos"
+
+echo "List $TARGET_ROOT"
+ls -al "$TARGET_ROOT"
+
+sudo mount --bind "$DIB_SLES_OFFLINE_TARGET_DIR" "$TARGET_ROOT/repos/"
+sudo mount "$TARGET_ROOT/repos/$DIB_SLES_ISO_REPO_FILE" "$TARGET_ROOT/mnt/repos" -o loop
+
+echo "List $TARGET_ROOT/mnt/repos"
+ls -al "$TARGET_ROOT/mnt/repos"
+ls "$TARGET_ROOT/etc" | grep "login"
+echo "End list $TARGET_ROOT/mnt/repos"

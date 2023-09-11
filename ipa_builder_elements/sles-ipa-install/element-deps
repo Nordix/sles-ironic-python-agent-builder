@@ -1,0 +1,5 @@
+sles-ipa-ramdisk-base
+dhcp-all-interfaces
+ibft-interfaces
+install-static
+source-repositories
