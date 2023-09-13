@@ -51,5 +51,6 @@ rm -rf "$SYSBENCH_VER"
 rm -rf "sysbench-$SYSBENCH_VER"
 
 # python-hardware
-zypper install -y "python310-pip"
-"pip3.10" install "hardware"
+zypper install -y "python311-pip"
+python3.11 -m pip install --upgrade pip
+pip install "hardware"

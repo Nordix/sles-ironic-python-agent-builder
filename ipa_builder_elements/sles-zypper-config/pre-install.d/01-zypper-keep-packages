@@ -27,9 +27,12 @@ zypper addrepo "dir:/mnt/repos/Product-SLES" "dvdSLES"
 zypper addrepo "dir:/mnt/repos/Product-SLES_SAP" "dvdSLES_SAP"
 zypper addrepo "dir:/mnt/repos/Product-WE" "dvdWE"
 zypper remove -y --force-resolution  "python3*" || true
-zypper install -y "python3.10"
-zypper install -y "python3.10-devel"
-ln -s "/usr/bin/python3.10" "/usr/bin/python3"
-ln -s "/usr/bin/python3.10" "/usr/bin/python"
+zypper remove -y jeos-firstboot
+zypper install -y "python311"
+zypper install -y "python311-devel"
+ls /usr/bin | grep "python"
+ln -s "/usr/bin/python3.11" "/usr/bin/python3"
+ln -s "/usr/bin/python3.11" "/usr/bin/python"
+python3 --version || true
+python --version || true
 
-python3 --version

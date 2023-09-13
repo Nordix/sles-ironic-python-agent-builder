@@ -46,8 +46,8 @@ IRLIBDIR=/tmp/ironic-lib
 UPPER_CONSTRAINTS=/tmp/requirements/upper-constraints.txt
 VENVDIR=/opt/ironic-python-agent
 
-"python3.10" --version
-"python3.10" -m venv $VENVDIR
+"python3.11" --version
+"python3.11" -m venv $VENVDIR
 REQUIRED_PIP_STR="21.3.1"
 REQUIRED_PIP_TUPLE="(21, 3, 1)"
 HAS_PIP=$($VENVDIR/bin/python3 -c \

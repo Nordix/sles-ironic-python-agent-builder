@@ -1,0 +1,8 @@
+IPA_REPO=https://github.com/Nordix/ironic-python-agent.git
+IPA_BRANCH=basic_auth_image_download
+IPA_REF=refs/remotes/origin/basic_auth_image_download
+ENABLE_BOOTSTRAP_TEST=false
+ENABLE_DEV_USER_PASS=true
+ENABLE_DEV_USER_SSH=true
+DISABLE_UPLOAD=true
+TEST_IN_CI=false

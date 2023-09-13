@@ -34,14 +34,13 @@ QUIET_CLEANUP="${QUIET_CLEANUP:-false}"
 ENABLE_DEV_USER_PASS="${ENABLE_DEV_USER_PASS:-false}"
 ENABLE_DEV_USER_SSH="${ENABLE_DEV_USER_SSH:-false}"
 
-
 if [ -d "$IPA_BUILD_WORKSPACE" ]; then
     rm -rf "$IPA_BUILD_WORKSPACE"
 fi
 
 # Install required packages
 #sudo apt install --yes python3-pip python3-virtualenv qemu-utils
-dnf install -y python3-pip python3-virtualenv qemu-utils
+sudo apt install -y python3-pip python3-virtualenv qemu-utils
 
 # Create the work directory
 mkdir --parents "${IPA_BUILD_WORKSPACE}"
@@ -63,8 +62,10 @@ export DIB_REPOREF_requirements="${OPENSTACK_REQUIREMENTS_REF}"
 export DIB_REPOREF_ironic_python_agent="${IPA_REF}"
 export DIB_REPOREF_ironic_lib="${IRONIC_LIB_REF}"
 export DIB_DEV_USER_USERNAME=metal3
+export DIB_SIMPLE_INIT_NETWORKMANAGER=1
 export DIB_REPOLOCATION_glean="https://github.com/Nordix/glean.git"
 export DIB_REPOREF_glean="refs/heads/parsing_error"
+
 if [ "${ENABLE_DEV_USER_PASS}" == "true" ]; then
 export DIB_DEV_USER_PWDLESS_SUDO=yes
 export DIB_DEV_USER_PASSWORD="test"

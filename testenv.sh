@@ -1,0 +1,12 @@
+#!/bin/bash
+export IPA_REPO="https://github.com/Nordix/ironic-python-agent.git"
+export IPA_BRANCH="basic_auth_image_download"
+export IPA_REF="refs/remotes/origin/basic_auth_image_download"
+export ENABLE_BOOTSTRAP_TEST="false"
+export ENABLE_DEV_USER_PASS="true"
+export ENABLE_DEV_USER_SSH="true"
+export DISABLE_UPLOAD="true"
+export TEST_IN_CI="false"
+export DIB_SLES_SERVICE_PACK="SP5"
+export DIB_SLES_IMAGE_TARGET_PLATFORM="Cloud-GM"
+export DIB_SLES_ISO_REPO_FILE="SLE-15-SP5-Full-x86_64-GM-Media1.iso"
