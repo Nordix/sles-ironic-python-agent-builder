@@ -7,7 +7,7 @@ fi
 
 SCRIPTDIR=$(dirname "$0")
 
-SEDSTRING="s/Environment=/Environment=\"GLEAN_CONFIG_DRIVE_LABEL=${DIB_SIMPLE_INIT_CONFIG_DRIVE_LABEL}\"/"
+SEDSTRING="s/Environment=/Environment=\"GLEAN_CONFIG_DRIVE_LABEL=${DIB_SIMPLE_INIT_CONFIG_DRIVE_LABEL:-ir-vfg-dev}\"/"
 
 sed -e "${SEDSTRING}" "${SCRIPTDIR}/glean-early-override-template.service" > "/etc/systemd/system/glean-early.service"
 
