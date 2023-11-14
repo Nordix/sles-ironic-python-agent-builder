@@ -1,0 +1,4 @@
+*.initramfs
+*.tar
+*.kernel
+*.qcow2
