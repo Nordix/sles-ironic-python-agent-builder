@@ -34,10 +34,6 @@ CACHED_IMAGE=$DIB_IMAGE_CACHE/$BASE_IMAGE_FILE
 CACHED_TAR=$DIB_IMAGE_CACHE/$BASE_IMAGE_TAR
 CACHED_SHA256SUMS_FILE=$DIB_IMAGE_CACHE/SHA256SUMS.$BASE_IMAGE_FILE
 
-
-
-
-
 if [ -n "$DIB_OFFLINE" ] ; then
 echo "Moving locally stored image to dib cache."
 
@@ -195,14 +191,6 @@ sudo tar -C $TARGET_ROOT --numeric-owner --xattrs --xattrs-include='*' --xattrs-
 
 echo "SUCESS CREATING BASE FS"
 
-
-
-
-
-
-
-
-
    # $TMP_HOOKS_PATH/bin/cache-url $DIB_CLOUD_IMAGES/$SHA256SUMS_FILE $CACHED_SHA256SUMS_FILE
 else
     echo "ERROR: Image donwloading is not implemented for SLES at the moment."
@@ -228,6 +216,14 @@ DIB_SLES_ISO_REPO="${DIB_SLES_ISO_REPO:-/tmp/${REPO_BASE_IMAGE_FILE}}"
 
 sudo mkdir -p "$TARGET_ROOT/repos"
 sudo mkdir -p "$TARGET_ROOT/mnt/repos"
+
+# Copy cloud-init patches
+if [ -r "$DIB_CLOUD_INIT_PATCH" ]; then
+        sudo mkdir -p "$TARGET_ROOT/cloudinit-patch"
+        sudo cp -r "$DIB_CLOUD_INIT_PATCH" "$TARGET_ROOT"
+fi
+echo "List $TARGET_ROOT/${DIB_CLOUD_INIT_PATCH##*/}"
+sudo ls -al "$TARGET_ROOT/${DIB_CLOUD_INIT_PATCH##*/}"
 
 echo "List $TARGET_ROOT"
 ls -al "$TARGET_ROOT"

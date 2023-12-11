@@ -79,12 +79,13 @@ export DIB_ADDITIONAL_IPA_KERNEL_MODULES="megaraid_sas"
 ## Provide path(s) of the custom elemnts for DIB
 CUSTOM_ELEMENTS="${CURRENT_SCRIPT_DIR}/ipa_builder_elements"
 export ELEMENTS_PATH="${ELEMENTS_PATH:-${CUSTOM_ELEMENTS}}"
+export DIB_CLOUD_INIT_PATCH="${DIB_CLOUD_INIT_PATCH:-/tmp/cloudinit-patch}"
 
 # Build the IPA initramfs and kernel images
 disk-image-create \
     "sles-ipa-install" "${IPA_BASE_OS}" "sles-zypper-config" "sles-ipa-ramdisk-base" \
     "dynamic-login" "journal-to-console" "devuser" "openssh-server" "sles-extra-hardware" \
-    "ipa-module-autoload" "simple-init" "override-simple-init" -o "${IPA_IMAGE_NAME}"
+    "ipa-module-autoload" -o "${IPA_IMAGE_NAME}"
 
 # Deactivate the python virtual environment
 deactivate

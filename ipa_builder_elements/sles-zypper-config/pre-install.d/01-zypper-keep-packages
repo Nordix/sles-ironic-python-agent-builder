@@ -36,3 +36,46 @@ ln -s "/usr/bin/python3.11" "/usr/bin/python"
 python3 --version || true
 python --version || true
 
+# Install cloud-init from package
+# zypper install -y "cloud-init"
+
+Install cloud-init from source
+zypper install -y git
+zypper install -y python3-pip
+git clone https://github.com/holmanb/cloud-init.git
+cd cloud-init
+git checkout holmanb/why-so-many-suse
+pwd
+cp /cloudinit-patch/*.patch .
+ls -la
+sudo git apply ./*.patch
+sudo python3 -m pip install -r requirements.txt
+sudo python3 setup.py build
+sudo python3 setup.py install --init-system systemd
+
+for svc in cloud-init-local.service cloud-init.service cloud-config.service cloud-final.service; do
+ sudo systemctl enable $svc
+done
+
+cat <<EOF >>/etc/cloud/cloud.cfg.d/01_ds-identify.cfg
+datasource_list: ["openstack"]
+EOF
+#datasource:
+#  OpenStack:
+#    dsmode: local
+#    metadata_urls: ["http://169.254.169.254"]
+#    max_wait: -1
+#    timeout: 10
+#    retries: 5
+#    apply_network_config: True
+#EOF
+
+systemctl disable "wicked.service"
+zypper remove -y -u "wicked"
+zypper install -y "NetworkManager"
+mkdir "/etc/sysconfig/network-scripts"
+systemctl enable "NetworkManager"
+zypper update
+rm -f "/usr/lib/systemd/system/wicked.service"
+rm -f "/etc/systemd/system/network.service"
+

@@ -1,0 +1,24 @@
+From 2e2d7add7dea196f8c6ac4c9672f62cfc0cea920 Mon Sep 17 00:00:00 2001
+From: smoshiur1237 <moshiur.rahman@est.tech>
+Date: Thu, 26 Oct 2023 15:37:05 +0300
+Subject: [PATCH] add import
+
+---
+ cloudinit/distros/opensuse.py | 1 +
+ 1 file changed, 1 insertion(+)
+
+diff --git a/cloudinit/distros/opensuse.py b/cloudinit/distros/opensuse.py
+index 1c2f9caf..dc39c679 100644
+--- a/cloudinit/distros/opensuse.py
++++ b/cloudinit/distros/opensuse.py
+@@ -15,6 +15,7 @@ from cloudinit import distros, helpers, subp, util
+ from cloudinit.distros import PackageList
+ from cloudinit.distros import rhel_util as rhutil
+ from cloudinit.distros.parsers.hostname import HostnameConf
++from cloudinit.net import ipv4_mask_to_net_prefix
+ from cloudinit.settings import PER_INSTANCE
+ 
+ LOG = logging.getLogger(__name__)
+-- 
+2.42.0
+
