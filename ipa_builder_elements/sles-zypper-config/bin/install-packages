@@ -38,7 +38,12 @@ function show_options () {
 
 function run_zypper() {
     # TODO: Uncertain if this can ever block wanting input from user
-    zypper --non-interactive --gpg-auto-import-keys "$@"
+    if [[ "${ACTION}" == "remove" ]]; then
+        # Don't fail if the package is not present.
+        zypper --non-interactive --gpg-auto-import-keys "$@" || true
+    else
+        zypper --non-interactive --gpg-auto-import-keys "$@"
+    fi
 }
 
 TEMP=$(getopt -o hudem: -n $SCRIPTNAME -- "$@")

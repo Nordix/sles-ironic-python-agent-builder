@@ -8,6 +8,9 @@ fi
 set -eu
 set -o pipefail
 
+# Dracut mkinitrd is not installed by default in >= 15.5, so install it.
+sudo zypper in -y dracut-mkinitrd-deprecated
+
 # This is to tell mkinitrd to include the right tools for the root filesystem
 # that will actually be used for the final image. This is likely something
 # different than what the chroot is currently on (which might currently be a
