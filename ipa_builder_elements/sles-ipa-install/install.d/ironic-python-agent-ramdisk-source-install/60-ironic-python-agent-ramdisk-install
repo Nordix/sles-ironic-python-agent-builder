@@ -5,37 +5,52 @@ if [ "${DIB_DEBUG_TRACE:-0}" -gt 0 ]; then
 fi
 set -eu
 set -o pipefail
-# Install IPA distro package requirements
 
-zypper install -y \
-curl \
-dmidecode \
-iptables \
-lshw \
-ipmitool \
-qemu-tools \
-gcc \
-parted \
-hdparm \
-util-linux \
-mkisofs \
-gptfdisk \
-kmod \
-psmisc \
-dosfstools \
-mdadm \
-efibootmgr \
-efivar \
-chrony \
-e2fsprogs \
-nvme-cli \
-open-iscsi \
-libffi-devel \
-libopenssl-devel
+# Install and lock IPA distro package requirements
+declare -a packages=(dmidecode iptables lshw ipmitool parted hdparm util-linux mkisofs
+    gptfdisk kmod psmisc dosfstools mdadm efibootmgr efivar chrony e2fsprogs
+    nvme-cli open-iscsi)
+zypper install -y --no-recommends "${packages[@]}"
+zypper al "${packages[@]}"
 
-zypper install -y \
-git \
-man-pages
+# Build deps
+zypper install -y --no-recommends gcc python311-pip git
+
+# python 3.11 is used to install ipa. Update the symlinks so that we can remove
+# python 3.6 later and avoid having 2 versions of python.
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.11 20
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 20
+sudo update-alternatives --install /usr/bin/pip pip /usr/bin/pip3.11 20
+sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.11 20
+
+### REQUIRED PACKAGES
+packages=(jq wget patch gptfdisk docker libnm0 xorriso pciutils qemu-tools
+    sysconfig kexec-tools openvswitch device-mapper NetworkManager open-lldp
+    kernel-firmware typelib-1_0-NM-1_0)
+zypper install -y --no-recommends "${packages[@]}"
+zypper al "${packages[@]}"
+
+# Install nmstate
+zypper in -y --no-recommends cargo make
+mkdir /tmp/nmstate-build
+pushd /tmp/nmstate-build
+python3.11 -m venv .
+. ./bin/activate
+pip install setuptools PyYAML
+git clone https://github.com/nmstate/nmstate.git
+cd nmstate
+PREFIX=/usr make install
+deactivate
+cd ..
+
+# Install NetworkManager-ovs, not found in zypper repos so install this way
+wget -O nm-ovs.rpm https://ftp.lysator.liu.se/pub/opensuse/distribution/leap/15.6/repo/oss/x86_64/NetworkManager-ovs-1.44.2-150600.1.7.x86_64.rpm
+zypper in -y nm-ovs.rpm
+popd
+
+pip install docker ovs
+### END OF REQUIRED PACKAGES
+
 
 #cloud-init \
 export LC_ALL=C.UTF-8

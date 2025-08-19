@@ -6,5 +6,15 @@ fi
 set -eu
 set -o pipefail
 
-# Disable caching packages for all repositories
-sudo zypper modifyrepo --all --no-keep-packages
+# This file should be the last one to execute. Hence delete zypper/rpm and
+# their libraries here, deleting them before would break the installation.
+sudo zypper rm -y --clean-deps zypper || true
+rm -rf /usr/lib/rpm \
+    /usr/lib/zypp \
+    /usr/lib/zypper \
+    /usr/lib64/zypp* \
+    /usr/lib64/libzypp* \
+    /usr/lib64/librpm* \
+    /etc/zypp \
+    /usr/bin/suseconnect \
+    /usr/lib/sysimage 

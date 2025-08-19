@@ -20,19 +20,21 @@ zypper install -y make automake libtool pkgconfig libaio-devel
 zypper install -y libconfig-devel libnl-devel readline-devel flex
 
 # lldpd
-LLDPAD_VER="v1.1"
+# ATM we install open-lldpd with zypper, no need to build this ourselves
 
-curl -O "https://codeload.github.com/openSUSE/lldpad/tar.gz/refs/tags/$LLDPAD_VER"
-tar -xf "$LLDPAD_VER"
+# LLDPAD_VER="v1.1"
 
-pushd "lldpad-${LLDPAD_VER#*v}"
-./bootstrap.sh
-./configure --prefix=/usr
-make
-make install
-popd
-rm -rf "$LLDPAD_VER"
-rm -rf "lldpad-$LLDPAD_VER"
+# curl -O "https://codeload.github.com/openSUSE/lldpad/tar.gz/refs/tags/$LLDPAD_VER"
+# tar -xf "$LLDPAD_VER"
+
+# pushd "lldpad-${LLDPAD_VER#*v}"
+# ./bootstrap.sh
+# ./configure --prefix=/usr
+# make
+# make install
+# popd
+# rm -rf "$LLDPAD_VER"
+# rm -rf "lldpad-$LLDPAD_VER"
 
 #sysbench
 SYSBENCH_VER="1.0.20"

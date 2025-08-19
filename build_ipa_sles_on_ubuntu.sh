@@ -85,7 +85,7 @@ export ELEMENTS_PATH="${ELEMENTS_PATH:-${CUSTOM_ELEMENTS}}"
 disk-image-create \
     "sles-ipa-install" "${IPA_BASE_OS}" "sles-zypper-config" "sles-ipa-ramdisk-base" \
     "dynamic-login" "journal-to-console" "devuser" "openssh-server" "sles-extra-hardware" \
-    "ipa-module-autoload" "simple-init" "override-simple-init" -o "${IPA_IMAGE_NAME}"
+    "ipa-module-autoload" -o "${IPA_IMAGE_NAME}"
 
 # Deactivate the python virtual environment
 deactivate
@@ -124,5 +124,4 @@ if $ENABLE_BOOTSTRAP_TEST; then
     fi
     popd
 fi
-
 
