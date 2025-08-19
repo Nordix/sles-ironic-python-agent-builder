@@ -19,3 +19,285 @@ for folder in $KNOWN_FIRMWARE_PATH; do
     done
 done
 
+# Don't remove these if you want to get ssh connection
+if [[ "${DIB_SLESIPA_INSTALL_SSH:-false}" = false ]]; then
+    zypper rm -y openssh-server \
+        openssh-common \
+        openssh-clients || true
+
+    rm -rf \
+        /etc/permissions.secure \
+        /etc/permissions.paranoid \
+        /etc/permissions.easy \
+        /etc/permissions.local \
+        /etc/permissions.d \
+        /etc/permissions || true
+fi
+
+# Delete these but not all the deps.
+zypper rm -y kernel-firmware-amdgpu \
+    kernel-firmware-bluetooth \
+    kernel-firmware-nvidia \
+    kernel-firmware-radeon \
+    kernel-firmware-sound || true
+
+# Remove unused and large libraries
+rm -rf /usr/lib64/python3.6
+rm -rf /usr/lib64/libpython3.6*
+rm -rf /usr/lib/python3.6*
+rm -rf /usr/lib/dracut /usr/lib/gpg*
+rm -rf /usr/sbin/visudo
+rm -rf /usr/src
+rm -rf /usr/lib/systemd/system/apparmor.service
+rm -rf /lib/apparmor
+rm -rf /root/.cargo
+rm -rf /usr/share/man
+rm -rf /var/lib/alternatives \
+    /var/lib/zypp \
+    /var/lib/xkb \
+    /var/lib/apparmor \
+    /var/lib/suse-build-key \
+    /var/lib/YaST2 \
+    /var/lib/rpm
+
+# Remove wicked
+systemctl disable wicked
+systemctl enable NetworkManager
+zypper rm -y --clean-deps wicked
+rm -rf /usr/share/wicked /etc/wicked /usr/lib/wicked /usr/lib64/libwicked*
+
+# Remove build deps + other unused packages
+zypper rm --clean-deps -y \
+    cargo \
+    git \
+    gcc \
+    curl \
+    apparmor-profiles \
+    apparmor \
+    autoconf \
+    audit \
+    branding-SLE \
+    combustion \
+    ethtool \
+    fbiterm \
+    fdupes \
+    git-core \
+    haveged \
+    issue-generator \
+    jeos-licenses \
+    jitterentropy-devel \
+    less \
+    readline-devel \
+    rsync \
+    rsyslog \
+    smartmontools \
+    vim-small \
+    xfsprogs \
+    dracut \
+    grub2 grub2-efi \
+    python311-pip \
+    perl \
+    make || true
+
+# Finally we manually delete unused files and binaries.
+rm -rf /etc/profile.d \
+    /etc/libibverbs.d \
+    /etc/mime.types \
+    /etc/netconfig.d \
+    /etc/default \
+    /etc/inputrc.keys \
+    /etc/X11 \
+    /etc/rpm \
+    /etc/audit \
+    /etc/xdg \
+    /etc/sudo_logsrvd.conf \
+    /etc/profile \
+    /etc/gnupg \
+    /etc/csh.login \
+    /etc/csh.cshrc \
+    /etc/apparmor \
+    /etc/xattr.conf \
+    /etc/tmpfiles.d \
+    /etc/terminfo \
+    /etc/java \
+    /etc/gnome_defaults.conf \
+    /etc/bash_completion.d \
+    /etc/apparmor.d \
+    /etc/aliases.d \
+    /etc/aliases \
+    /etc/SUSEConnect.example \
+    /etc/DIR_COLORS
+
+rm -rf /sbin/apparmor_parser \
+    /usr/sbin/apparmor_status \
+    /sbin/install-info \
+    /usr/sbin/tc \
+    /usr/sbin/containerd-shim-runc-v1 \
+    /usr/sbin/eapol_test \
+    /usr/sbin/fsck.ext4 \
+    /usr/sbin/sudo_logsrvd \
+    /usr/sbin/dcbtool \
+    /usr/sbin/debugfs \
+    /usr/sbin/devlink \
+    /usr/sbin/cgdisk \
+    /usr/sbin/vdptool \
+    /usr/sbin/gdisk \
+    /usr/sbin/fixparts \
+    /usr/sbin/sudo_sendlog \
+    /usr/sbin/rdma \
+    /usr/sbin/fdisk \
+    /usr/sbin/tipc \
+    /usr/sbin/sfdisk \
+    /usr/sbin/g13-syshelp \
+    /usr/sbin/bridge \
+    /usr/sbin/dcb \
+    /usr/sbin/useradd \
+    /usr/sbin/fsck.minix \
+    /usr/sbin/mkfs.ext3 \
+    /usr/sbin/zramctl \
+    /usr/sbin/usermod \
+    /usr/sbin/mkswap \
+    /usr/sbin/mkfs.minix \
+    /usr/sbin/genl \
+    /usr/sbin/vdpa \
+    /usr/sbin/tune2fs \
+    /usr/sbin/rtmon \
+    /usr/sbin/ifstat \
+    /usr/sbin/cfdisk \
+    /usr/sbin/nstat
+
+rm -rf /usr/bin/zypper \
+    /usr/bin/omshell \
+    /usr/bin/fio \
+    /usr/bin/suse-uptime-tracker \
+    /usr/bin/gpg2 \
+    /usr/bin/catatonit \
+    /usr/bin/gpgsm \
+    /usr/bin/gpgv2 \
+    /usr/bin/gpg-agent \
+    /usr/bin/flex \
+    /usr/bin/repo2solv \
+    /usr/bin/rpm* \
+    /usr/bin/cvtsudoers \
+    /usr/bin/localedef \
+    /usr/bin/gpg-card \
+    /usr/bin/info \
+    /usr/bin/trust \
+    /usr/bin/gpgscm \
+    /usr/bin/gpg-wks-client \
+    /usr/bin/lsfd \
+    /usr/bin/lsof \
+    /usr/bin/gpg-wks-server \
+    /usr/bin/g13 \
+    /usr/bin/dumpkeys \
+    /usr/bin/kbxutil \
+    /usr/bin/gpgconf \
+    /usr/bin/cpio \
+    /usr/bin/install \
+    /usr/bin/m4 \
+    /usr/bin/vdir \
+    /usr/bin/ptx \
+    /usr/bin/dir \
+    /usr/bin/gpg-connect-agent \
+    /usr/bin/gpgtar \
+    /usr/bin/csplit \
+    /usr/bin/nslookup \
+    /usr/bin/expr \
+    /usr/bin/nl \
+    /usr/bin/tac \
+    /usr/bin/lslogins \
+    /usr/bin/chronyc \
+    /usr/bin/lsipc \
+    /usr/bin/xz \
+    /usr/bin/dnssec-signzone \
+    /usr/bin/zypp-NameReqPrv \
+    /usr/bin/passwd \
+    /usr/bin/gio \
+    /usr/bin/eject \
+    /usr/bin/chage \
+    /usr/bin/busctl \
+    /usr/bin/unshare \
+    /usr/bin/stat \
+    /usr/bin/setpriv \
+    /usr/bin/setarch \
+    /usr/bin/lsns \
+    /usr/bin/findmnt \
+    /usr/bin/df \
+    /usr/bin/factor \
+    /usr/bin/xargs \
+    /usr/bin/su \
+    /usr/bin/stty \
+    /usr/bin/pr \
+    /usr/bin/nsupdate \
+    /usr/bin/nsenter \
+    /usr/bin/lslocks \
+    /usr/bin/ipcs \
+    /usr/bin/wdctl \
+    /usr/bin/update-mime-database \
+    /usr/bin/script \
+    /usr/bin/gpasswd \
+    /usr/bin/cal \
+    /usr/bin/systemd-dissect \
+    /usr/bin/od \
+    /usr/bin/mknod \
+    /usr/bin/lsmem \
+    /usr/bin/ln \
+    /usr/bin/gpgsplit \
+    /usr/bin/chrt \
+    /usr/bin/uclampset \
+    /usr/bin/taskset \
+    /usr/bin/pinentry-curses \
+    /usr/bin/mkfifo \
+    /usr/bin/infocmp \
+    /usr/bin/iconv \
+    /usr/bin/diff3 \
+    /usr/bin/chmem \
+    /usr/bin/chgrp \
+    /usr/bin/chcon \
+    /usr/bin/sha512sum \
+    /usr/bin/sha384sum \
+    /usr/bin/scriptlive \
+    /usr/bin/pipesz \
+    /usr/bin/numfmt \
+    /usr/bin/irqtop \
+    /usr/bin/h2xs \
+    /usr/bin/glib-compile-schemas \
+    /usr/bin/chfn \
+    /usr/bin/split \
+    /usr/bin/shred \
+    /usr/bin/sha256sum \
+    /usr/bin/sha224sum \
+    /usr/bin/pinentry-tty \
+    /usr/bin/more \
+    /usr/bin/mokutil \
+    /usr/bin/hardlink \
+    /usr/bin/dnssec-ksr \
+    /usr/bin/delv \
+    /usr/bin/column \
+    /usr/bin/choom \
+    /usr/bin/b2sum \
+    /usr/bin/x86_64-suse-linux-gnu-pkg-config \
+    /usr/bin/who \
+    /usr/bin/shuf \
+    /usr/bin/sdiff \
+    /usr/bin/printf \
+    /usr/bin/logger \
+    /usr/bin/locale \
+    /usr/bin/last \
+    /usr/bin/join \
+    /usr/bin/dnssec-cds
+
+# These are good for debugging
+if [[ "${DIB_SLESIPA_INSTALL_DEBUG:-false}" = false ]]; then
+    rm -rf /usr/sbin/ss \
+    /usr/bin/du \
+    /usr/bin/dig \
+    /usr/bin/diff \
+    /usr/bin/top \
+    /usr/bin/ping \
+    /usr/bin/dmesg \
+    /usr/bin/mkdir \
+    /usr/bin/tail \
+    /usr/bin/chown \
+    /usr/bin/chmod
+fi
