@@ -278,6 +278,13 @@ Beyond installing the `ironic-python-agent`, `ironic-lib` and
   listen for raw data from stdin and write compressed data to stdout. Command
   can be with arguments.
 - Configures rescue mode if `DIB_IPA_ENABLE_RESCUE` is not set to `false`.
+- Removes build depedencies (like gcc) in the end and heavily optimizes the
+  image size by removing software that is not used by IPA, such as Perl, pip,
+  package managers, SSH, dracut and a lot more.
+- Installation of SSH can be controlled with `DIB_IPA_INSTALL_SSH` which is
+  false by default.
+- Installation of useful debugging utilities like ping, dmesg, and vim can be
+  controlled with `DIB_IPA_INSTALL_DEBUG_TOOLS` which is false by default.
 
 **note**
    Using the ram disk will require at least 1.5GB of RAM
