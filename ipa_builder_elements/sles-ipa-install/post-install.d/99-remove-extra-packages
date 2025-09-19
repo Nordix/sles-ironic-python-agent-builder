@@ -20,7 +20,7 @@ for folder in $KNOWN_FIRMWARE_PATH; do
 done
 
 # Don't remove these if you want to get ssh connection
-if [[ "${DIB_SLESIPA_INSTALL_SSH:-false}" = false ]]; then
+if [[ "${DIB_IPA_INSTALL_SSH:-false}" = "false" ]]; then
     zypper rm -y openssh-server \
         openssh-common \
         openssh-clients || true
@@ -91,13 +91,29 @@ zypper rm --clean-deps -y \
     rsync \
     rsyslog \
     smartmontools \
-    vim-small \
     xfsprogs \
     dracut \
     grub2 grub2-efi \
     python311-pip \
     perl \
     make || true
+
+# These are good for debugging
+if [[ "${DIB_IPA_INSTALL_DEBUG_TOOLS:-false}" = "false" ]]; then
+    zypper rm -y --clean-deps vim-small
+
+    rm -rf /usr/sbin/ss \
+    /usr/bin/du \
+    /usr/bin/dig \
+    /usr/bin/diff \
+    /usr/bin/top \
+    /usr/bin/ping \
+    /usr/bin/dmesg \
+    /usr/bin/mkdir \
+    /usr/bin/tail \
+    /usr/bin/chown \
+    /usr/bin/chmod
+fi
 
 # Finally we manually delete unused files and binaries.
 rm -rf /etc/profile.d \
@@ -286,18 +302,3 @@ rm -rf /usr/bin/zypper \
     /usr/bin/last \
     /usr/bin/join \
     /usr/bin/dnssec-cds
-
-# These are good for debugging
-if [[ "${DIB_SLESIPA_INSTALL_DEBUG:-false}" = false ]]; then
-    rm -rf /usr/sbin/ss \
-    /usr/bin/du \
-    /usr/bin/dig \
-    /usr/bin/diff \
-    /usr/bin/top \
-    /usr/bin/ping \
-    /usr/bin/dmesg \
-    /usr/bin/mkdir \
-    /usr/bin/tail \
-    /usr/bin/chown \
-    /usr/bin/chmod
-fi
