@@ -3,7 +3,20 @@
 # Fail whenever any command fails
 set -eu
 
+#################################################
+# Check host operating system
+#################################################
+# shellcheck disable=SC1091
+. /etc/os-release
+export SUPPORTED_DISTROS=(centos ubuntu)
+if [[ ! "${SUPPORTED_DISTROS[*]}" =~ ${ID} ]]; then
+  echo "ERROR: Supported OS distros for the host are: CentOS or Ubuntu"
+  exit 1
+fi
+
+#################################################
 # Repository configuration options
+#################################################
 # dev-env
 METAL3_DEV_ENV_REPO="https://github.com/metal3-io/metal3-dev-env"
 METAL3_DEV_ENV_BRANCH="${METAL3_DEV_ENV_BRANCH:-main}"
@@ -33,29 +46,36 @@ QUIET_CLEANUP="${QUIET_CLEANUP:-false}"
 # Configure devuser
 ENABLE_DEV_USER_PASS="${ENABLE_DEV_USER_PASS:-false}"
 ENABLE_DEV_USER_SSH="${ENABLE_DEV_USER_SSH:-false}"
-
+INCLUDE_SIMPLE_INIT="${INCLUDE_SIMPLE_INIT:-false}"
 
 if [ -d "$IPA_BUILD_WORKSPACE" ]; then
     rm -rf "$IPA_BUILD_WORKSPACE"
 fi
 
-# Install required packages
-#sudo apt install --yes python3-pip python3-virtualenv qemu-utils
-dnf install -y python3-pip python3-virtualenv qemu-utils
+#################################################
+# Install required packages and setup host
+#################################################
+if [[ "${ID}" == "ubuntu" ]]; then
+    sudo apt install -y python3-pip qemu-utils
+elif [[ "${ID}" == "centos" ]]; then
+    sudo dnf install -y python3-pip qemu-img
+fi
 
 # Create the work directory
 mkdir --parents "${IPA_BUILD_WORKSPACE}"
 cd "${IPA_BUILD_WORKSPACE}"
 
 # Install the cloned IPA builder tool
-virtualenv venv
+python3 -m venv venv
 # shellcheck source=/dev/null
 source "./venv/bin/activate"
 python3 -m pip install --upgrade pip
 python3 -m pip install "diskimage-builder"
 
+#################################################
 # Export variables that will be used by DIB
-## Configure the IPA builder to pull the IPA source from Nordix fork
+#################################################
+# Configure the IPA builder to pull the IPA source from Nordix fork
 export DIB_REPOLOCATION_ironic_python_agent="${IPA_REPO}"
 export DIB_REPOLOCATION_ironic_lib="${IRONIC_LIB_REPO}"
 export DIB_REPOLOCATION_requirements="${OPENSTACK_REQUIREMENTS_REPO}"
@@ -63,8 +83,9 @@ export DIB_REPOREF_requirements="${OPENSTACK_REQUIREMENTS_REF}"
 export DIB_REPOREF_ironic_python_agent="${IPA_REF}"
 export DIB_REPOREF_ironic_lib="${IRONIC_LIB_REF}"
 export DIB_DEV_USER_USERNAME=metal3
+export DIB_INSTALLTYPE_pip_and_virtualenv="package"
 export DIB_REPOLOCATION_glean="https://github.com/Nordix/glean.git"
-export DIB_REPOREF_glean="refs/heads/parsing_error"
+
 if [ "${ENABLE_DEV_USER_PASS}" == "true" ]; then
 export DIB_DEV_USER_PWDLESS_SUDO=yes
 export DIB_DEV_USER_PASSWORD="test"
@@ -72,19 +93,26 @@ fi
 if [ "${ENABLE_DEV_USER_SSH}" == "true" ]; then
 export DIB_DEV_USER_AUTHORIZED_KEYS="${DEV_USER_SSH_PATH}"
 fi
-export DIB_INSTALLTYPE_pip_and_virtualenv="package"
-## List of additional kernel modules that should be loaded during boot separated by space
-## This list is used by the custom element named ipa-modprobe
+
+# List of additional kernel modules that should be loaded during boot separated by space
+# This list is used by the custom element named ipa-modprobe
 export DIB_ADDITIONAL_IPA_KERNEL_MODULES="megaraid_sas"
-## Provide path(s) of the custom elemnts for DIB
+## Provide path(s) of the custom elements for DIB
 CUSTOM_ELEMENTS="${CURRENT_SCRIPT_DIR}/ipa_builder_elements"
 export ELEMENTS_PATH="${ELEMENTS_PATH:-${CUSTOM_ELEMENTS}}"
 
+#################################################
 # Build the IPA initramfs and kernel images
+#################################################
+SIMPLE_INIT_ELEMENTS=()
+if [[ "${INCLUDE_SIMPLE_INIT}" == "true" ]]; then
+    SIMPLE_INIT_ELEMENTS=(simple-init override-simple-init)
+fi
+
 disk-image-create \
     "sles-ipa-install" "${IPA_BASE_OS}" "sles-zypper-config" "sles-ipa-ramdisk-base" \
     "dynamic-login" "journal-to-console" "devuser" "openssh-server" "sles-extra-hardware" \
-    "ipa-module-autoload" "simple-init" "override-simple-init" -o "${IPA_IMAGE_NAME}"
+    "ipa-module-autoload" "${SIMPLE_INIT_ELEMENTS[@]}" -o "${IPA_IMAGE_NAME}"
 
 # Deactivate the python virtual environment
 deactivate
@@ -103,11 +131,13 @@ if [ ${filesize_MB} -ge ${IRONIC_SIZE_LIMIT_MB} ]; then
     exit 1
 fi
 
-# Test whether the newly built IPA is compatible with the choosen Ironic version and with
-# the metal3-dev-env
+#################################################
+# Test whether the newly built IPA is compatible with the chosen Ironic
+# version and with the metal3-dev-env
+#################################################
 if $ENABLE_BOOTSTRAP_TEST; then
     git clone --single-branch --branch "${METAL3_DEV_ENV_BRANCH}" "${METAL3_DEV_ENV_REPO}"
-    # dev-env variables can be exported here to customze the test
+    # dev-env variables can be exported here to customize the test
     export USE_LOCAL_IPA=true
     export IPA_DOWNLOAD_ENABLED=false
     pushd "${DEV_ENV_REPO_LOCATION}"
@@ -123,5 +153,4 @@ if $ENABLE_BOOTSTRAP_TEST; then
     fi
     popd
 fi
-
 
