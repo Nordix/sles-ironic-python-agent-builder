@@ -81,6 +81,7 @@ ENABLE_DEV_USER_PASS # Adds a user to the IPA image who has password-less sudo
 DIB_DEV_USER_AUTHORIZED_KEYS # Path to the a ssh key on the build host that
                              # will be copied to to the IPA image and it will
                              # be used as the public key for devuser ssh access
+INCLUDE_SIMPLE_INIT # whether to include simple-init elements to IPA; true/false
 ```
 
 ### **`Workspace preparation`**
