@@ -1,0 +1,33 @@
+#!/bin/bash
+
+if [[ ${DIB_DEBUG_TRACE:-0} -gt 0 ]]; then
+    set -x
+fi
+set -eu
+set -o pipefail
+
+
+if [[ -z "${DIB_CUSTOM_HW_MANAGER_DIR}" ]] ; then
+    echo "No hardware manager source directory has been found!"
+    exit 1
+fi
+
+if [[ -z "${TARGET_ROOT}" ]] ; then
+    echo "No target work directory has been found!"
+    exit 1
+fi
+
+# No point running this element if there are no plugins to install
+if [[ -z "${DIB_IPA_PLUGINS}" ]] ; then
+    echo "No plugins to install!"
+    exit 1
+fi
+
+# plugin directory names have to be added with comma separation
+IFS=',' read -r -a plugins <<< "${DIB_IPA_PLUGINS}"
+
+# Copy the plugin directories from host FS to build env FS
+for plugin in "${plugins[@]}"; do
+    sudo cp -r "${DIB_CUSTOM_HW_MANAGER_DIR}/${plugin}" "${TARGET_ROOT}/opt/"
+done
+

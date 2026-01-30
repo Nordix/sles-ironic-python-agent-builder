@@ -31,11 +31,19 @@ zypper install -y --no-recommends "${packages[@]}"
 zypper al "${packages[@]}"
 
 # Install nmstate
-zypper in -y --no-recommends cargo make
+zypper in -y --no-recommends make
+
 mkdir /tmp/nmstate-build
 pushd /tmp/nmstate-build
+curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+. "${HOME}/.cargo/env"
+rustup update
 python3.11 -m venv .
+unset XDG_CURRENT_DESKTOP
+unset DESKTOP_SESSION
+unset GNOME_DESKTOP_SESSION_ID
 . ./bin/activate
+python -m pip install --upgrade pip
 pip install setuptools PyYAML
 git clone https://github.com/nmstate/nmstate.git
 cd nmstate
@@ -44,7 +52,7 @@ deactivate
 cd ..
 
 # Install NetworkManager-ovs, not found in zypper repos so install this way
-wget -O nm-ovs.rpm https://ftp.lysator.liu.se/pub/opensuse/distribution/leap/15.6/repo/oss/x86_64/NetworkManager-ovs-1.44.2-150600.1.7.x86_64.rpm
+wget -O nm-ovs.rpm https://ftp.lysator.liu.se/pub/opensuse/opensuse/distribution/leap/15.6/repo/oss/x86_64/NetworkManager-ovs-1.44.2-150600.1.7.x86_64.rpm
 zypper in -y nm-ovs.rpm
 popd
 
