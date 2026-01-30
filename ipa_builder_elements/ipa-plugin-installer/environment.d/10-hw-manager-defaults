@@ -1,0 +1,5 @@
+#!/bin/bash
+
+export DIB_CUSTOM_HW_MANAGER_DIR="${DIB_CUSTOM_HW_MANAGER_DIR:-/tmp/hardware_managers}"
+export DIB_IPA_PLUGINS="${DIB_IPA_PLUGINS:-}"
+
