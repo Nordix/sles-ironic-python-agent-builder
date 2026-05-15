@@ -37,10 +37,10 @@ decided to use DIB with some custom elements to remove dependency on
 `IPA builder` as it doesn't support SLES based images anyways.
 
 **NOTE:** The workflow expects SLES evaluation images by default for example
- `SLES15-SP6-Minimal-VM.x86_64-OpenStack-Cloud-GM.qcow2` as a base image for
+ `SLES15-SP7-Minimal-VM.x86_64-OpenStack-Cloud-GM.qcow2` as a base image for
 IPA and installs additional distribution packages from
-`SLE-15-SP6-Full-x86_64-GM-Media1.iso`. During the build process the custom
-elements use the repositories from `SLE-15-SP6-Full-x86_64-GM-Media1.iso`
+`SLE-15-SP7-Full-x86_64-GM-Media1.iso`. During the build process the custom
+elements use the repositories from `SLE-15-SP7-Full-x86_64-GM-Media1.iso`
 in order to avoid any potential issue that might arise from the fact that using
 remote repositories would require registration but there was no available
 documentation about the effect of continuously re-registration of a SLES image
@@ -213,7 +213,7 @@ the upstream elements match the `SLES`.
 The `sles` element is responsible for preparing the root file system of the IPA
 image. The element extracts a root file system from the SLES base image, sets
 the legacy and EFI boot configuration and mounts the
-`SLE-15-SP6-Full-x86_64-GM-Media1.iso` into the `$TARGET_ROOT/mnt/repos`
+`SLE-15-SP7-Full-x86_64-GM-Media1.iso` into the `$TARGET_ROOT/mnt/repos`
 location to enable package installation via zypper during the build process.
 
 The directory path on the host system that contains SLES images used by this
