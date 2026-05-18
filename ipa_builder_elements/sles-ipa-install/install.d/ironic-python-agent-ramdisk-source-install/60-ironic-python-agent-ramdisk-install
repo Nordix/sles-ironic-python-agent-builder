@@ -50,10 +50,11 @@ cd nmstate
 PREFIX=/usr make install
 deactivate
 cd ..
-
+#echo "!!!!! DOWNLOADING NetworkManager-ovs !!!!!"
 # Install NetworkManager-ovs, not found in zypper repos so install this way
-wget -O nm-ovs.rpm https://ftp.lysator.liu.se/pub/opensuse/opensuse/distribution/leap/15.6/repo/oss/x86_64/NetworkManager-ovs-1.44.2-150600.1.7.x86_64.rpm
-zypper in -y nm-ovs.rpm
+#wget -O nm-ovs.rpm https://ftp.lysator.liu.se/pub/opensuse/opensuse/distribution/leap/15.6/repo/oss/x86_64/NetworkManager-ovs-1.44.2-150600.1.7.x86_64.rpm
+#echo "!!!!! INSTALLING NetworkManager-ovs !!!!!"
+#zypper in -y nm-ovs.rpm
 popd
 
 pip install docker ovs
