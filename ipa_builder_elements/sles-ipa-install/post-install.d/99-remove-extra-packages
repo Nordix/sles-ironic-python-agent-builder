@@ -7,6 +7,7 @@ set -eu
 set -o pipefail
 
 rm -rf /tmp/ironic-python-agent
+
 # Clean both /lib and /lib/firmware, the first
 # loop will likely go ahead and remove everything, the || true
 # below will keep it from erroring.
@@ -34,8 +35,9 @@ if [[ "${DIB_IPA_INSTALL_SSH:-false}" = "false" ]]; then
         /etc/permissions || true
 fi
 
-# Delete these but not all the deps.
-zypper rm -y kernel-firmware-amdgpu \
+# Remove the firmware packages first
+# Use quiet flag to suppress "file not found" warnings and keep build log clean
+zypper --quiet rm -y kernel-firmware-amdgpu \
     kernel-firmware-bluetooth \
     kernel-firmware-nvidia \
     kernel-firmware-radeon \
@@ -51,6 +53,7 @@ rm -rf /usr/src
 rm -rf /usr/lib/systemd/system/apparmor.service
 rm -rf /lib/apparmor
 rm -rf /root/.cargo
+rm -rf /root/.rustup
 rm -rf /usr/share/man
 rm -rf /var/lib/alternatives \
     /var/lib/zypp \
@@ -67,8 +70,7 @@ zypper rm -y --clean-deps wicked
 rm -rf /usr/share/wicked /etc/wicked /usr/lib/wicked /usr/lib64/libwicked*
 
 # Remove build deps + other unused packages
-zypper rm --clean-deps -y \
-    cargo \
+zypper --quiet rm --clean-deps -y \
     git \
     gcc \
     curl \
@@ -182,8 +184,7 @@ rm -rf /sbin/apparmor_parser \
     /usr/sbin/cfdisk \
     /usr/sbin/nstat
 
-rm -rf /usr/bin/zypper \
-    /usr/bin/omshell \
+rm -rf /usr/bin/omshell \
     /usr/bin/fio \
     /usr/bin/suse-uptime-tracker \
     /usr/bin/gpg2 \
