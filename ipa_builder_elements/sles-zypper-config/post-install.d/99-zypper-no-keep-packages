@@ -8,7 +8,6 @@ set -o pipefail
 
 # This file should be the last one to execute. Hence delete zypper/rpm and
 # their libraries here, deleting them before would break the installation.
-sudo zypper rm -y --clean-deps zypper || true
 rm -rf /usr/lib/rpm \
     /usr/lib/zypp \
     /usr/lib/zypper \
@@ -17,4 +16,5 @@ rm -rf /usr/lib/rpm \
     /usr/lib64/librpm* \
     /etc/zypp \
     /usr/bin/suseconnect \
+    /usr/bin/zypper \
     /usr/lib/sysimage 
