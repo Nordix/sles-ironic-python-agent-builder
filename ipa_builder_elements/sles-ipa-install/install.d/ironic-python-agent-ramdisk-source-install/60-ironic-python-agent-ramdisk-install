@@ -14,18 +14,18 @@ zypper install -y --no-recommends "${packages[@]}"
 zypper al "${packages[@]}"
 
 # Build deps
-zypper install -y --no-recommends gcc python311-pip git
+zypper install -y --no-recommends gcc python313-pip git
 
-# python 3.11 is used to install ipa. Update the symlinks so that we can remove
+# python 3.13 is used to install ipa. Update the symlinks so that we can remove
 # python 3.6 later and avoid having 2 versions of python.
-sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.11 20
-sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 20
-sudo update-alternatives --install /usr/bin/pip pip /usr/bin/pip3.11 20
-sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.11 20
+sudo update-alternatives --install /usr/bin/python python /usr/bin/python3.13 20
+sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.13 20
+sudo update-alternatives --install /usr/bin/pip pip /usr/bin/pip3.13 20
+sudo update-alternatives --install /usr/bin/pip3 pip3 /usr/bin/pip3.13 20
 
 ### REQUIRED PACKAGES
 packages=(jq wget patch gptfdisk docker libnm0 xorriso pciutils qemu-tools
-    sysconfig kexec-tools openvswitch device-mapper NetworkManager open-lldp
+    kexec-tools openvswitch device-mapper NetworkManager open-lldp
     kernel-firmware typelib-1_0-NM-1_0)
 zypper install -y --no-recommends "${packages[@]}"
 zypper al "${packages[@]}"
@@ -38,7 +38,7 @@ pushd /tmp/nmstate-build
 curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
 . "${HOME}/.cargo/env"
 rustup update
-python3.11 -m venv .
+python3.13 -m venv .
 unset XDG_CURRENT_DESKTOP
 unset DESKTOP_SESSION
 unset GNOME_DESKTOP_SESSION_ID
@@ -51,9 +51,12 @@ PREFIX=/usr make install
 deactivate
 cd ..
 
-# Install NetworkManager-ovs, not found in zypper repos so install this way
-wget -O nm-ovs.rpm https://ftp.lysator.liu.se/pub/opensuse/opensuse/distribution/leap/15.6/repo/oss/x86_64/NetworkManager-ovs-1.44.2-150600.1.7.x86_64.rpm
+# Install NetworkManager-ovs and sysconfig,
+# not found in zypper repos so install this way
+wget -O nm-ovs.rpm https://ftp.lysator.liu.se/pub/opensuse/opensuse/distribution/leap/16.0/repo/oss/x86_64/NetworkManager-ovs-1.52.0-160000.4.1.x86_64.rpm
+wget -O sysconfig.rpm https://ftp.lysator.liu.se/pub/opensuse/opensuse/distribution/leap/16.0/repo/oss/x86_64/sysconfig-0.90.0-160000.2.2.x86_64.rpm
 zypper in -y nm-ovs.rpm
+zypper in -y sysconfig.rpm
 popd
 
 pip install docker ovs
@@ -69,8 +72,8 @@ IRLIBDIR=/tmp/ironic-lib
 UPPER_CONSTRAINTS=/tmp/requirements/upper-constraints.txt
 VENVDIR=/opt/ironic-python-agent
 
-"python3.11" --version
-"python3.11" -m venv $VENVDIR
+"python3.13" --version
+"python3.13" -m venv $VENVDIR
 REQUIRED_PIP_STR="21.3.1"
 REQUIRED_PIP_TUPLE="(21, 3, 1)"
 HAS_PIP=$($VENVDIR/bin/python3 -c \

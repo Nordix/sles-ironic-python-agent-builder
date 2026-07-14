@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# SLES 16.0 puts the default files under /usr/etc instead of /etc
+# Config files need to be created when needed.
+# The upstream elements are not necessarily prepared to create the config
+# file, hence we copy/create the needed files here.
+
+mkdir /etc/ssh
+cp /usr/etc/ssh/sshd_config /etc/ssh

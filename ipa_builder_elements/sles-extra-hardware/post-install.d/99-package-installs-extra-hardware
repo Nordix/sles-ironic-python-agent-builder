@@ -43,7 +43,9 @@ curl -O "https://codeload.github.com/akopytov/sysbench/tar.gz/refs/tags/$SYSBENC
 tar -xf "$SYSBENCH_VER"
 
 pushd "sysbench-$SYSBENCH_VER"
-./autogen.sh
+# Running autogen.sh complained about not having 1.10.x version of automake.
+# So just run autoreconf directly and skip autogen.sh
+autoreconf -vi
 ./configure --without-mysql
 make -j
 make install
@@ -53,6 +55,6 @@ rm -rf "$SYSBENCH_VER"
 rm -rf "sysbench-$SYSBENCH_VER"
 
 # python-hardware
-zypper install -y "python311-pip"
-python3.11 -m pip install --upgrade pip
+zypper install -y "python313-pip"
+python3.13 -m pip install --upgrade pip
 pip install "hardware"
