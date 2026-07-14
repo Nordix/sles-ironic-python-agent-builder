@@ -73,6 +73,9 @@ source "./venv/bin/activate"
 python3 -m pip install --upgrade pip
 python3 -m pip install "diskimage-builder"
 
+# Patch the correct packages name for sles
+sed -i 's/"dhcp-client": "dhcp-client"/"dhcp-client": "dhcpcd"/' "${IPA_BUILD_WORKSPACE}/venv/lib/python3.12/site-packages/diskimage_builder/elements/dhcp-all-interfaces/pkg-map"
+
 #################################################
 # Export variables that will be used by DIB
 #################################################

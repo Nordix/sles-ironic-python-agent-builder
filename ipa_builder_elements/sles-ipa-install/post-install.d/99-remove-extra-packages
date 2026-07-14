@@ -33,6 +33,7 @@ if [[ "${DIB_IPA_INSTALL_SSH:-false}" = "false" ]]; then
         /etc/permissions.local \
         /etc/permissions.d \
         /etc/permissions || true
+	echo "SSH removed"
 fi
 
 # Remove the firmware packages first
@@ -42,6 +43,7 @@ zypper --quiet rm -y kernel-firmware-amdgpu \
     kernel-firmware-nvidia \
     kernel-firmware-radeon \
     kernel-firmware-sound || true
+echo "Kernel firmware removed"
 
 # Remove unused and large libraries
 rm -rf /usr/lib64/python3.6
@@ -62,43 +64,29 @@ rm -rf /var/lib/alternatives \
     /var/lib/suse-build-key \
     /var/lib/YaST2 \
     /var/lib/rpm
-
-# Remove wicked
-systemctl disable wicked
-systemctl enable NetworkManager
-zypper rm -y --clean-deps wicked
-rm -rf /usr/share/wicked /etc/wicked /usr/lib/wicked /usr/lib64/libwicked*
+echo "Collection of large libraries removed"
 
 # Remove build deps + other unused packages
 zypper --quiet rm --clean-deps -y \
     git \
     gcc \
     curl \
-    apparmor-profiles \
-    apparmor \
     autoconf \
     audit \
-    branding-SLE \
     combustion \
     ethtool \
-    fbiterm \
     fdupes \
     git-core \
-    haveged \
     issue-generator \
-    jeos-licenses \
-    jitterentropy-devel \
     less \
     readline-devel \
     rsync \
-    rsyslog \
     smartmontools \
-    xfsprogs \
     dracut \
     grub2 grub2-efi \
-    python311-pip \
     perl \
     make || true
+echo "Zypper packages removed"
 
 # These are good for debugging
 if [[ "${DIB_IPA_INSTALL_DEBUG_TOOLS:-false}" = "false" ]]; then
@@ -110,41 +98,40 @@ if [[ "${DIB_IPA_INSTALL_DEBUG_TOOLS:-false}" = "false" ]]; then
     /usr/bin/diff \
     /usr/bin/top \
     /usr/bin/ping \
-    /usr/bin/dmesg \
-    /usr/bin/mkdir \
-    /usr/bin/tail \
-    /usr/bin/chown \
-    /usr/bin/chmod
+    /usr/bin/tail
+
+	echo "Debug tools removed"
 fi
 
 # Finally we manually delete unused files and binaries.
-rm -rf /etc/profile.d \
-    /etc/libibverbs.d \
-    /etc/mime.types \
-    /etc/netconfig.d \
-    /etc/default \
-    /etc/inputrc.keys \
-    /etc/X11 \
-    /etc/rpm \
-    /etc/audit \
-    /etc/xdg \
-    /etc/sudo_logsrvd.conf \
-    /etc/profile \
-    /etc/gnupg \
-    /etc/csh.login \
-    /etc/csh.cshrc \
-    /etc/apparmor \
-    /etc/xattr.conf \
-    /etc/tmpfiles.d \
-    /etc/terminfo \
-    /etc/java \
-    /etc/gnome_defaults.conf \
-    /etc/bash_completion.d \
-    /etc/apparmor.d \
-    /etc/aliases.d \
-    /etc/aliases \
-    /etc/SUSEConnect.example \
-    /etc/DIR_COLORS
+rm -rf /usr/etc/profile.d \
+    /usr/etc/libibverbs.d \
+    /usr/etc/mime.types \
+    /usr/etc/netconfig.d \
+    /usr/etc/default \
+    /usr/etc/inputrc.keys \
+    /usr/etc/X11 \
+    /usr/etc/rpm \
+    /usr/etc/audit \
+    /usr/etc/xdg \
+    /usr/etc/sudo_logsrvd.conf \
+    /usr/etc/profile \
+    /usr/etc/gnupg \
+    /usr/etc/csh.login \
+    /usr/etc/csh.cshrc \
+    /usr/etc/apparmor \
+    /usr/etc/xattr.conf \
+    /usr/etc/tmpfiles.d \
+    /usr/etc/terminfo \
+    /usr/etc/java \
+    /usr/etc/gnome_defaults.conf \
+    /usr/etc/bash_completion.d \
+    /usr/etc/apparmor.d \
+    /usr/etc/aliases.d \
+    /usr/etc/aliases \
+    /usr/etc/SUSEConnect.example \
+    /usr/etc/DIR_COLORS
+echo "Configs under /usr/etc removed"
 
 rm -rf /sbin/apparmor_parser \
     /usr/sbin/apparmor_status \
@@ -157,15 +144,11 @@ rm -rf /sbin/apparmor_parser \
     /usr/sbin/dcbtool \
     /usr/sbin/debugfs \
     /usr/sbin/devlink \
-    /usr/sbin/cgdisk \
     /usr/sbin/vdptool \
-    /usr/sbin/gdisk \
     /usr/sbin/fixparts \
     /usr/sbin/sudo_sendlog \
     /usr/sbin/rdma \
-    /usr/sbin/fdisk \
     /usr/sbin/tipc \
-    /usr/sbin/sfdisk \
     /usr/sbin/g13-syshelp \
     /usr/sbin/bridge \
     /usr/sbin/dcb \
@@ -181,8 +164,14 @@ rm -rf /sbin/apparmor_parser \
     /usr/sbin/tune2fs \
     /usr/sbin/rtmon \
     /usr/sbin/ifstat \
-    /usr/sbin/cfdisk \
-    /usr/sbin/nstat
+    /usr/sbin/nstat \
+    /usr/sbin/btrfs-find-root \
+    /usr/sbin/btrfstune \
+    /usr/sbin/btrfs-image \
+    /usr/sbin/mkfs.btrfs \
+    /usr/sbin/btrfs-convert \
+    /usr/sbin/btrfs
+echo "System binaries under /usr/sbin removed"
 
 rm -rf /usr/bin/omshell \
     /usr/bin/fio \
@@ -239,7 +228,6 @@ rm -rf /usr/bin/omshell \
     /usr/bin/setarch \
     /usr/bin/lsns \
     /usr/bin/findmnt \
-    /usr/bin/df \
     /usr/bin/factor \
     /usr/bin/xargs \
     /usr/bin/su \
@@ -258,7 +246,6 @@ rm -rf /usr/bin/omshell \
     /usr/bin/od \
     /usr/bin/mknod \
     /usr/bin/lsmem \
-    /usr/bin/ln \
     /usr/bin/gpgsplit \
     /usr/bin/chrt \
     /usr/bin/uclampset \
@@ -302,4 +289,13 @@ rm -rf /usr/bin/omshell \
     /usr/bin/locale \
     /usr/bin/last \
     /usr/bin/join \
+    /usr/bin/perl \
+    /usr/bin/patch \
+    /usr/bin/dpdk-test \
+    /usr/bin/dpdk-test-flow-perf \
+    /usr/bin/dpdk-test-bbdev \
+    /usr/bin/dpdk-test-eventdev \
+    /usr/bin/dpdk-test-compress-perf \
+    /usr/bin/dpdk-test-crypto-perf \
     /usr/bin/dnssec-cds
+echo "Binaries under /usr/bin removed"

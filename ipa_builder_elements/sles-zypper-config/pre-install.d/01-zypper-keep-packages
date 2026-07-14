@@ -8,31 +8,21 @@ set -o pipefail
 
 # Enable caching packages for all repositories
 zypper modifyrepo --all --keep-packages
-zypper addrepo "dir:/mnt/repos/Module-Basesystem" "dvdBase"
-zypper addrepo "dir:/mnt/repos/Module-Containers" "dvdContainers"
-zypper addrepo "dir:/mnt/repos/Module-Desktop-Applications" "dvdDesktop"
-zypper addrepo "dir:/mnt/repos/Module-Development-Tools" "dvdDev"
-zypper addrepo "dir:/mnt/repos/Module-HPC" "dvdHPC"
-zypper addrepo "dir:/mnt/repos/Module-Legacy" "dvdLegacy"
-zypper addrepo "dir:/mnt/repos/Module-Live-Patching" "dvdPatching"
-zypper addrepo "dir:/mnt/repos/Module-Public-Cloud" "dvdPubCloud"
-zypper addrepo "dir:/mnt/repos/Module-Python3" "dvdPython3"
-zypper addrepo "dir:/mnt/repos/Module-Server-Applications" "dvdServer"
-zypper addrepo "dir:/mnt/repos/Module-Transactional-Server" "dvdTransServer"
-zypper addrepo "dir:/mnt/repos/Module-Web-Scripting" "dvdWebScript"
-zypper addrepo "dir:/mnt/repos/Product-HA" "dvdHA"
-zypper addrepo "dir:/mnt/repos/Product-RT" "dvdRT"
-zypper addrepo "dir:/mnt/repos/Product-SLED" "dvdSLED"
-zypper addrepo "dir:/mnt/repos/Product-SLES" "dvdSLES"
-zypper addrepo "dir:/mnt/repos/Product-SLES_SAP" "dvdSLES_SAP"
-zypper addrepo "dir:/mnt/repos/Product-WE" "dvdWE"
+zypper addrepo "dir:/mnt/repos/install" "SLES16-FULL"
+zypper refresh
+
+# Remove python to get rid of anything extra we don't want
 zypper remove -y --force-resolution  "python3*" || true
 zypper remove -y jeos-firstboot
-zypper install -y "python311"
-zypper install -y "python311-devel"
-ls /usr/bin | grep "python"
-ln -s "/usr/bin/python3.11" "/usr/bin/python3"
-ln -s "/usr/bin/python3.11" "/usr/bin/python"
-python3 --version || true
-python --version || true
+zypper install -y "python313"
+zypper install -y "python313-devel"
 
+# Print python binaries for debugging
+echo "Python binaries in /usr/bin before symlinking:"
+ls -la /usr/bin | grep "python"
+
+# ln -s "/usr/bin/python3.13" "/usr/bin/python3"
+ln -s "/usr/bin/python3.13" "/usr/bin/python"
+
+echo "python3 version: $(python3 --version 2>&1 || true)"
+echo "python version: $(python --version 2>&1 || true)"
