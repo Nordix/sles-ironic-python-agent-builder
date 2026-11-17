@@ -48,6 +48,7 @@ ENABLE_DEV_USER_PASS="${ENABLE_DEV_USER_PASS:-false}"
 ENABLE_DEV_USER_SSH="${ENABLE_DEV_USER_SSH:-false}"
 INCLUDE_SIMPLE_INIT="${INCLUDE_SIMPLE_INIT:-false}"
 INCLUDE_PLUGINS="${INCLUDE_PLUGINS:-false}"
+INCLUDE_BOOT_ANALYZE="${INCLUDE_BOOT_ANALYZE:-false}"
 
 if [ -d "$IPA_BUILD_WORKSPACE" ]; then
     rm -rf "$IPA_BUILD_WORKSPACE"
@@ -113,11 +114,15 @@ fi
 if [[ "${INCLUDE_PLUGINS}" == "true" ]]; then
     PLUGIN_INSTALLER=(ipa-plugin-installer)
 fi
+BOOT_ANALYZE=()
+if [[ "${INCLUDE_BOOT_ANALYZE}" == "true" ]]; then
+    BOOT_ANALYZE=(ipa-boot-analyze)
+fi
 
 disk-image-create \
     "sles-ipa-install" "${IPA_BASE_OS}" "sles-zypper-config" "sles-ipa-ramdisk-base" \
     "dynamic-login" "journal-to-console" "devuser" "openssh-server" "sles-extra-hardware" \
-    "ipa-module-autoload" "${SIMPLE_INIT_ELEMENTS[@]}" "${PLUGIN_INSTALLER[@]}" -o "${IPA_IMAGE_NAME}"
+    "ipa-module-autoload" "${SIMPLE_INIT_ELEMENTS[@]}" "${PLUGIN_INSTALLER[@]}" "${BOOT_ANALYZE[@]}" -o "${IPA_IMAGE_NAME}"
 
 # Deactivate the python virtual environment
 deactivate

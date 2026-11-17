@@ -1,0 +1,15 @@
+[Unit]
+Description=Log systemd-analyze boot measurements
+After=multi-user.target
+
+[Service]
+# Type=idle delays start until all queued jobs are dispatched and, unlike
+# oneshot, does not block boot completion while the script waits for it.
+Type=idle
+ExecStart=/bin/bash /usr/local/bin/ipa-boot-analyze.sh
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=ipa-boot-analyze
+
+[Install]
+WantedBy=multi-user.target
