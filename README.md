@@ -82,6 +82,7 @@ DIB_DEV_USER_AUTHORIZED_KEYS # Path to the a ssh key on the build host that
                              # will be copied to to the IPA image and it will
                              # be used as the public key for devuser ssh access
 INCLUDE_SIMPLE_INIT # whether to include simple-init elements to IPA; true/false
+INCLUDE_BOOT_ANALYZE # whether to include the ipa-boot-analyze element; true/false
 ```
 
 ### **`Workspace preparation`**
@@ -410,6 +411,23 @@ plugin has to match the name of the directory that contains the plugin code,
 by default the value is an empty string
 - `DIB_CUSTOM_HW_MANAGER_DIR` -> path to the directory on the builder host
 that contains the plugin directories, by default it is `/tmp/hardware_managers`
+
+### **`ipa-boot-analyze`**
+
+This element installs and enables the `ipa-boot-analyze.service` systemd unit.
+The unit starts after all other boot jobs have been dispatched, waits until the
+system has finished booting and then runs `systemd-analyze` (`time`, `blame`
+and `critical-chain`). To help debug slow IP allocation and IPA startup it also
+prints the critical chain of `network-online.target` and
+`ironic-python-agent.service`, the monotonic start/active timestamps of the
+network, DHCP and IPA units, and the kernel, DHCP and IPA journal entries with
+monotonic timestamps. The output is written to standard output so it can be
+inspected with `journalctl -u ipa-boot-analyze.service`. The log lines are
+tagged with the `ipa-boot-analyze` syslog identifier, which makes them easy to
+filter with `journalctl -t ipa-boot-analyze` or grep in collected ramdisk logs.
+
+The element is included in the build if `INCLUDE_BOOT_ANALYZE` is set to
+`true`, by default it is `false`.
 
 ## Additional notes
 
